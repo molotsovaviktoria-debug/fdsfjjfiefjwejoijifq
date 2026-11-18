@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DJK SIGNL • OTC AI Signals</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #050507;
+      --card: #0d0d11;
+      --card2: #14141a;
+      --border: #26161b;
+      --red: #ff1e42;
+      --red-dark: #b80d28;
+      --red-glow: rgba(255, 30, 66, 0.42);
+      --green: #00e676;
+      --text: #ffffff;
+      --muted: #8e8e9e;
+    }
+    * { 
+      box-sizing: border-box; margin: 0; padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      -webkit-tap-highlight-color: transparent; 
+      /* Защита от выделения текста и копирования */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    body {
+      background: radial-gradient(circle at top, #1f080e 0%, var(--bg) 52%);
+      color: var(--text);
+      padding: 15px;
+      padding-bottom: 34px;
+      min-height: 100vh;
+    }
+
+    .header {
+      position: relative;
+      padding-top: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .brand-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 14px var(--red-glow);
+    }
+    .brand-title span { color: var(--red); }
+    .live-pill {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #ff6b81;
+      background: rgba(255, 30, 66, 0.14);
+      border: 1px solid rgba(255, 30, 66, 0.38);
+      padding: 4px 12px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 9px var(--red);
+      animation: pulse 1.3s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.28; } }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: var(--card);
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 13px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--red), var(--red-dark));
+      color: #fff;
+      box-shadow: 0 4px 15px var(--red-glow);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 13px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+    }
+
+    .cats {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-bottom: 10px;
+      padding-bottom: 2px;
+    }
+    .cat {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 11px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .cat.active {
+      background: rgba(255, 30, 66, 0.18);
+      border-color: var(--red);
+      color: #fff;
+    }
+
+    label.lbl {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    select {
+      width: 100%;
+      background: #08080b;
+      color: #fff;
+      border: 1px solid #331820;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .quote-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .quote-price {
+      font-size: 27px;
+      font-weight: 900;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    .quote-uid {
+      font-size: 11px;
+      color: #ff6b81;
+      background: rgba(255, 30, 66, 0.12);
+      border: 1px solid rgba(255, 30, 66, 0.32);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+    }
+
+    canvas {
+      width: 100%;
+      height: 195px;
+      display: block;
+      background: #07070a;
+      border: 1px solid #241318;
+      border-radius: 14px;
+      /* Запрещаем сохранение canvas как картинки через контекстное меню */
+      pointer-events: none;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+    .m-box {
+      background: var(--card2);
+      border: 1px solid #241419;
+      border-radius: 10px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .m-name { font-size: 10px; color: var(--muted); font-weight: 800; margin-bottom: 3px; }
+    .m-val { font-size: 13px; font-weight: 900; color: #fff; }
+
+    .tf-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .tf-item {
+      background: var(--card2);
+      border: 1px solid #29151b;
+      color: #d1d1db;
+      padding: 10px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+    }
+    .tf-item.active {
+      background: var(--red);
+      border-color: #ff4d6a;
+      color: #fff;
+      box-shadow: 0 0 14px var(--red-glow);
+    }
+
+    .signal-panel {
+      background: #07070a;
+      border: 1px solid #2b151c;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .sig-info { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .sig-dir { font-size: 26px; font-weight: 900; margin: 7px 0; letter-spacing: 0.4px; }
+    .dir-buy { color: var(--green); text-shadow: 0 0 16px rgba(0, 230, 118, 0.35); }
+    .dir-sell { color: var(--red); text-shadow: 0 0 16px var(--red-glow); }
+    .sig-meta { font-size: 12px; color: #e2e2ea; font-weight: 700; }
+
+    .btn-main {
+      width: 100%;
+      background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+      border: 1px solid #ff4d6a;
+      color: #fff;
+      padding: 15px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 6px 24px var(--red-glow);
+    }
+    .btn-main:active { transform: scale(0.98); }
+
+    .otc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card2);
+      border: 1px solid #261419;
+      border-radius: 12px;
+      padding: 11px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .otc-row:hover { border-color: var(--red); }
+    .badge-up { background: rgba(0, 230, 118, 0.14); color: var(--green); border: 1px solid rgba(0, 230, 118, 0.3); padding: 5px 9px; border-radius: 8px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .badge-dn { background: rgba(255, 30, 66, 0.16); color: var(--red); border: 1px solid rgba(255, 30, 66, 0.35); padding: 5px 9px; border-radius: 8px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .hidden { display: none; }
+
+    /* Жесткое удаление плашки Netlify */
+    ._netlify-badge, [id*="netlify"], a[href*="netlify.com"], div[style*="netlify"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      position: absolute !important;
+      left: -9999px !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div style="position: absolute; right: 0; top: 0; display: flex; gap: 4px;">
+      <button class="lang-btn active" data-lang="ru" style="background:#ff1e42; color:#fff; border:1px solid #ff4d6a; border-radius:6px; padding:4px 8px; font-size:10px; font-weight:800; cursor:pointer;">RU</button>
+      <button class="lang-btn" data-lang="en" style="background:#14141a; color:#8e8e9e; border:1px solid #26161b; border-radius:6px; padding:4px 8px; font-size:10px; font-weight:800; cursor:pointer;">EN</button>
+      <button class="lang-btn" data-lang="uk" style="background:#14141a; color:#8e8e9e; border:1px solid #26161b; border-radius:6px; padding:4px 8px; font-size:10px; font-weight:800; cursor:pointer;">UK</button>
+    </div>
+    <div class="brand-title">DJK <span>SIGNL</span></div>
+    <div class="live-pill"><span class="dot"></span><span id="connStatus">OTC LIVE • 36 ПАР</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tabTerminal">📈 Терминал OTC</button>
+    <button class="tab-btn" id="tabScanner">🔥 AI Сканер OTC (36)</button>
+  </div>
+
+  <div id="secTerminal">
+    <div class="card">
+      <div class="cats">
+        <div class="cat active" data-cat="ALL">Весь OTC (36)</div>
+        <div class="cat" data-cat="Валюты OTC">Валюты OTC</div>
+        <div class="cat" data-cat="Крипто OTC">Крипто OTC</div>
+        <div class="cat" data-cat="Сырьё OTC">Сырьё OTC</div>
+        <div class="cat" data-cat="Акции OTC">Акции OTC</div>
+      </div>
+
+      <label class="lbl" id="lblSelectAsset">Выберите актив Pocket Option OTC</label>
+      <select id="assetSelect"></select>
+
+      <div class="quote-row">
+        <div class="quote-price" id="livePrice">—</div>
+        <div class="quote-uid">PO ID: <span id="uidLabel">Verified</span></div>
+      </div>
+
+      <canvas id="otcCanvas" width="600" height="330"></canvas>
+
+      <div class="metrics">
+        <div class="m-box"><div class="m-name">RSI (14)</div><div class="m-val" id="mRsi">—</div></div>
+        <div class="m-box"><div class="m-name">ТРЕНД EMA</div><div class="m-val" id="mEma">—</div></div>
+        <div class="m-box"><div class="m-name">ТОЧНОСТЬ AI</div><div class="m-val" id="mConf" style="color:#ff1e42;">—</div></div>
+        <div class="m-box"><div class="m-name">ПОДДЕРЖКА</div><div class="m-val" id="mSup">—</div></div>
+        <div class="m-box"><div class="m-name">СОПРОТИВЛ.</div><div class="m-val" id="mRes">—</div></div>
+        <div class="m-box"><div class="m-name">ВОЛАТИЛЬН.</div><div class="m-val" id="mVol">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label class="lbl" id="lblExpTime">Время экспирации / Таймфрейм (Pocket Option)</label>
+      <div class="tf-grid">
+        <button class="tf-item" data-tf="S3" data-sec="3">S3</button>
+        <button class="tf-item" data-tf="S15" data-sec="15">S15</button>
+        <button class="tf-item" data-tf="S30" data-sec="30">S30</button>
+        <button class="tf-item active" data-tf="M1" data-sec="60">M1</button>
+        <button class="tf-item" data-tf="M3" data-sec="180">M3</button>
+        <button class="tf-item" data-tf="M5" data-sec="300">M5</button>
+        <button class="tf-item" data-tf="M30" data-sec="1800">M30</button>
+        <button class="tf-item" data-tf="H1" data-sec="3600">H1</button>
+        <button class="tf-item" data-tf="H4" data-sec="14400">H4</button>
+      </div>
+
+      <div class="signal-panel">
+        <div class="sig-info" id="sigReason">Нейросеть анализирует 36 OTC-активов в реальном времени</div>
+        <div class="sig-dir" id="sigDirection">ОЖИДАНИЕ СИГНАЛА</div>
+        <div class="sig-meta" id="sigMeta">Нажмите красную кнопку ниже для входа в сделку</div>
+      </div>
+
+      <button class="btn-main" id="btnSignal">⚡ ПОЛУЧИТЬ СИГНАЛ</button>
+    </div>
+  </div>
+
+  <div id="secScanner" class="hidden">
+    <div class="card">
+      <label class="lbl" id="lblScannerTitle" style="margin-bottom:10px;">Рейтинг всех 36 OTC-пар по точности AI</label>
+      <div id="scannerList"></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== БЛОКИРОВКА СОХРАНЕНИЯ И КОПИРОВАНИЯ =====
+    
+    // 1. Отключаем контекстное меню (правый клик мыши / долгое нажатие)
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    });
+
+    // 2. Отключаем горячие клавиши для открытия разработчика и сохранения (F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I и т.д.)
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && (e.key === 'U' || e.key === 'S' || e.key === 's'))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // ===============================================
+
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    const params = new URLSearchParams(window.location.search);
+    const API_BASE = (params.get("api") || "https://176-117-79-71.sslip.io").replace(/\/$/, "");
+    document.getElementById("uidLabel").textContent = params.get("uid") || "Verified";
+
+    let market = {};
+    let currentAsset = "EURUSD_OTC";
+    let currentCat = "ALL";
+
+    const selectEl = document.getElementById("assetSelect");
+    const canvas = document.getElementById("otcCanvas");
+    const ctx = canvas.getContext("2d");
+
+    document.getElementById("tabTerminal").onclick = () => {
+      document.getElementById("tabTerminal").classList.add("active");
+      document.getElementById("tabScanner").classList.remove("active");
+      document.getElementById("secTerminal").classList.remove("hidden");
+      document.getElementById("secScanner").classList.add("hidden");
+    };
+    document.getElementById("tabScanner").onclick = () => {
+      document.getElementById("tabScanner").classList.add("active");
+      document.getElementById("tabTerminal").classList.remove("active");
+      document.getElementById("secScanner").classList.remove("hidden");
+      document.getElementById("secTerminal").classList.add("hidden");
+      renderScanner();
+    };
+
+    document.querySelectorAll(".cat").forEach(p => {
+      p.onclick = () => {
+        document.querySelectorAll(".cat").forEach(x => x.classList.remove("active"));
+        p.classList.add("active");
+        currentCat = p.dataset.cat;
+        rebuildDropdown(true);
+        renderTerminal();
+      };
+    });
+
+    document.querySelectorAll(".tf-item").forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll(".tf-item").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+      };
+    });
+
+    selectEl.onchange = (e) => {
+      currentAsset = e.target.value;
+      renderTerminal();
+    };
+
+    function rebuildDropdown(resetFirst = false) {
+      const items = Object.values(market).filter(x => currentCat === "ALL" || x.cat === currentCat);
+      if (!items.length) return;
+      selectEl.innerHTML = "";
+      items.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = `${item.name} — ${item.cat}`;
+        selectEl.appendChild(opt);
+      });
+      if (resetFirst || !items.some(x => x.id === currentAsset)) {
+        currentAsset = items[0].id;
+      }
+      selectEl.value = currentAsset;
+    }
+
+    function drawCandles(candles, an) {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      if (!candles || !candles.length) return;
+
+      const slice = candles.slice(-42);
+      let minP = Infinity, maxP = -Infinity;
+      slice.forEach(c => {
+        if (c.l < minP) minP = c.l;
+        if (c.h > maxP) maxP = c.h;
+      });
+      const pad = (maxP - minP) * 0.14 || 0.0001;
+      minP -= pad; maxP += pad;
+      const toY = (v) => h - ((v - minP) / (maxP - minP)) * h;
+
+      ctx.strokeStyle = "#1a0f13";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i++) {
+        const y = (h / 4) * i;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = "rgba(255, 30, 66, 0.55)";
+      ctx.beginPath(); ctx.moveTo(0, toY(an.resistance)); ctx.lineTo(w, toY(an.resistance)); ctx.stroke();
+      ctx.strokeStyle = "rgba(0, 230, 118, 0.5)";
+      ctx.beginPath(); ctx.moveTo(0, toY(an.support)); ctx.lineTo(w, toY(an.support)); ctx.stroke();
+      ctx.setLineDash([]);
+
+      const step = (w - 20) / slice.length;
+      const cw = Math.max(4, step * 0.62);
+
+      slice.forEach((c, i) => {
+        const x = 10 + i * step + step / 2;
+        const yo = toY(c.o), yc = toY(c.c), yh = toY(c.h), yl = toY(c.l);
+        const isUp = c.c >= c.o;
+        ctx.strokeStyle = isUp ? "#00e676" : "#ff1e42";
+        ctx.fillStyle = isUp ? "#00e676" : "#ff1e42";
+
+        ctx.beginPath(); ctx.moveTo(x, yh); ctx.lineTo(x, yl); ctx.stroke();
+        ctx.fillRect(x - cw / 2, Math.min(yo, yc), cw, Math.max(2, Math.abs(yc - yo)));
+      });
+    }
+
+    function renderTerminal() {
+      const st = market[currentAsset];
+      if (!st) return;
+      if (selectEl.options.length === 0) rebuildDropdown(false);
+
+      const an = st.analysis;
+      document.getElementById("livePrice").textContent = Number(st.price).toFixed(st.dec);
+      document.getElementById("mRsi").textContent = an.rsi;
+      document.getElementById("mEma").textContent = an.ema_trend;
+      document.getElementById("mEma").style.color = an.ema_trend === "BULLISH" ? "#00e676" : "#ff1e42";
+      document.getElementById("mConf").textContent = an.confidence + "%";
+      document.getElementById("mSup").textContent = Number(an.support).toFixed(st.dec);
+      document.getElementById("mRes").textContent = Number(an.resistance).toFixed(st.dec);
+      document.getElementById("mVol").textContent = an.volatility + " pt";
+
+      drawCandles(st.candles, an);
+    }
+
+    function renderScanner() {
+      const el = document.getElementById("scannerList");
+      const sorted = Object.values(market).sort((a, b) => b.analysis.confidence - a.analysis.confidence);
+      el.innerHTML = sorted.map(st => {
+        const an = st.analysis;
+        const up = an.direction === "BUY";
+        return `
+          <div class="otc-row" onclick="pickAsset('${st.id}')">
+            <div>
+              <div style="font-weight:800;font-size:13px;">${st.name} <span style="color:#8e8e9e;font-size:11px;">(${st.cat})</span></div>
+              <div style="font-size:11px;color:#9e9eb0;margin-top:3px;">Цена: ${Number(st.price).toFixed(st.dec)} • RSI: ${an.rsi} • ${an.summary}</div>
+            </div>
+            <span class="${up ? 'badge-up' : 'badge-dn'}">${up ? 'ВВЕРХ ↗' : 'ВНИЗ ↘'} ${an.confidence}%</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    window.pickAsset = (id) => {
+      currentCat = "ALL";
+      document.querySelectorAll(".cat").forEach(x => x.classList.toggle("active", x.dataset.cat === "ALL"));
+      currentAsset = id;
+      rebuildDropdown(false);
+      document.getElementById("tabTerminal").click();
+      renderTerminal();
+    };
+
+    async function syncMarket() {
+      try {
+        const res = await fetch(`${API_BASE}/market`, { cache: "no-store" });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        market = data.assets || {};
+        document.getElementById("connStatus").textContent = `OTC LIVE • ${Object.keys(market).length} ПАР`;
+        renderTerminal();
+        if (!document.getElementById("secScanner").classList.contains("hidden")) renderScanner();
+      } catch (e) {
+        document.getElementById("connStatus").textContent = "ПОДКЛЮЧЕНИЕ...";
+      }
+    }
+
+    // ТАЙМЕР АНАЛИЗА И ВЫДАЧИ СИГНАЛА (6 СЕКУНД)
+    let isAnalyzing = false;
+    document.getElementById("btnSignal").onclick = () => {
+      if (isAnalyzing) return;
+      const st = market[currentAsset];
+      if (!st) return;
+
+      isAnalyzing = true;
+      const t = translations[currentLang];
+      const btn = document.getElementById("btnSignal");
+      const dirEl = document.getElementById("sigDirection");
+      
+      btn.style.opacity = "0.6";
+      dirEl.className = "sig-dir";
+      dirEl.textContent = t.analyzingState || "⌛ АНАЛИЗ СТАКАНА...";
+      document.getElementById("sigReason").textContent = t.syncText || "Синхронизация свечей Pocket Option...";
+      
+      let countdown = 6;
+      document.getElementById("sigMeta").innerHTML = `⏳ ${t.waitTimer || "Подождите"} ${countdown} сек...`;
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+
+      const timerInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          document.getElementById("sigMeta").innerHTML = `⏳ ${t.waitTimer || "Подождите"} ${countdown} сек...`;
+        } else {
+          clearInterval(timerInterval);
+          isAnalyzing = false;
+          btn.style.opacity = "1";
+
+          const an = st.analysis;
+          const up = an.direction === "BUY";
+          dirEl.textContent = up ? "ВВЕРХ (BUY) ↗" : "ВНИЗ (SELL) ↘";
+          dirEl.className = "sig-dir " + (up ? "dir-buy" : "dir-sell");
+
+          const activeTfBtn = document.querySelector(".tf-item.active");
+          const tfName = activeTfBtn ? activeTfBtn.dataset.tf : "M1";
+          const secVal = activeTfBtn ? parseInt(activeTfBtn.dataset.sec) || 60 : 60;
+
+          const now = new Date();
+          const targetTime = new Date(now.getTime() + secVal * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+
+          document.getElementById("sigReason").textContent = `${an.summary} • ${t.conf}: ${an.confidence}%`;
+          document.getElementById("sigMeta").innerHTML = `${t.priceLabel} <b>${Number(st.price).toFixed(st.dec)}</b><br>` +
+            `⏳ ${t.expText} [<b>${tfName}</b>] • ${t.targetUntil}: <b>${targetTime}</b>`;
+          if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("medium");
+        }
+      }, 1000);
+    };
+
+    syncMarket();
+    setInterval(syncMarket, 1500);
+
+    const translations = {
+      ru: {
+        live: "OTC LIVE • 36 ПАР",
+        term: "📈 Терминал OTC",
+        scan: "🔥 AI Сканер OTC (36)",
+        allCat: "Весь OTC (36)",
+        fxCat: "Валюты OTC",
+        cryptoCat: "Крипто OTC",
+        commCat: "Сырьё OTC",
+        stockCat: "Акции OTC",
+        selectAsset: "Выберите актив Pocket Option OTC",
+        rsi: "RSI (14)",
+        ema: "ТРЕНД EMA",
+        conf: "ТОЧНОСТЬ AI",
+        sup: "ПОДДЕРЖКА",
+        res: "СОПРОТИВЛ.",
+        vol: "ВОЛАТИЛЬН.",
+        expLabel: "Время экспирации / Таймфрейм (Pocket Option)",
+        waitSig: "ОЖИДАНИЕ СИГНАЛА",
+        analyzingState: "⌛ АНАЛИЗ РЫНКА...",
+        waitTimer: "Синхронизация через",
+        syncText: "Синхронизация свечей Pocket Option...",
+        sigReason: "Нейросеть анализирует 36 OTC-активов в реальном времени",
+        sigMeta: "Нажмите красную кнопку ниже для входа в сделку",
+        btnSig: "⚡ ПОЛУЧИТЬ СИГНАЛ",
+        scannerTitle: "Рейтинг всех 36 OTC-пар по точности AI",
+        priceLabel: "Вход:",
+        expText: "Экспирация",
+        targetUntil: "Цель до"
+      },
+      en: {
+        live: "OTC LIVE • 36 PAIRS",
+        term: "📈 OTC Terminal",
+        scan: "🔥 AI OTC Scanner (36)",
+        allCat: "All OTC (36)",
+        fxCat: "Forex OTC",
+        cryptoCat: "Crypto OTC",
+        commCat: "Commodities OTC",
+        stockCat: "Stocks OTC",
+        selectAsset: "Select Pocket Option OTC asset",
+        rsi: "RSI (14)",
+        ema: "EMA TREND",
+        conf: "AI ACCURACY",
+        sup: "SUPPORT",
+        res: "RESISTANCE",
+        vol: "VOLATILITY",
+        expLabel: "Expiration time / Timeframe (Pocket Option)",
+        waitSig: "WAITING FOR SIGNAL",
+        analyzingState: "⌛ ANALYZING MARKET...",
+        waitTimer: "Syncing in",
+        syncText: "Syncing Pocket Option candles...",
+        sigReason: "Neural network analyzing 36 OTC assets in real-time",
+        sigMeta: "Click the red button below to enter the trade",
+        btnSig: "⚡ GET SIGNAL",
+        scannerTitle: "Rating of all 36 OTC pairs by AI accuracy",
+        priceLabel: "Entry:",
+        expText: "Expiration",
+        targetUntil: "Target until"
+      },
+      uk: {
+        live: "OTC LIVE • 36 ПАР",
+        term: "📈 Термінал OTC",
+        scan: "🔥 AI Сканер OTC (36)",
+        allCat: "Весь OTC (36)",
+        fxCat: "Валюти OTC",
+        cryptoCat: "Крипто OTC",
+        commCat: "Сировина OTC",
+        stockCat: "Акції OTC",
+        selectAsset: "Виберіть актив Pocket Option OTC",
+        rsi: "RSI (14)",
+        ema: "ТРЕНД EMA",
+        conf: "ТОЧНІСТЬ AI",
+        sup: "ПІДТРИМКА",
+        res: "ОПІР",
+        vol: "ВОЛАТИЛЬНІСТЬ",
+        expLabel: "Час експірації / Таймфрейм (Pocket Option)",
+        waitSig: "ОЧІКУВАННЯ СИГНАЛУ",
+        analyzingState: "⌛ АНАЛІЗ РИНКУ...",
+        waitTimer: "Синхронізація через",
+        syncText: "Синхронізація свічок Pocket Option...",
+        sigReason: "Нейромережа аналізує 36 OTC-активів у реальному часі",
+        sigMeta: "Натисніть червону кнопку нижче для входу в угоду",
+        btnSig: "⚡ ОТРИМАТИ СИГНАЛ",
+        scannerTitle: "Рейтинг усіх 36 OTC-пар за точністю AI",
+        priceLabel: "Вхід:",
+        expText: "Експірація",
+        targetUntil: "Ціль до"
+      }
+    };
+
+    let currentLang = "ru";
+
+    document.querySelectorAll(".lang-btn").forEach(btn => {
+      btn.onclick = (e) => {
+        document.querySelectorAll(".lang-btn").forEach(b => {
+          b.style.background = "#14141a";
+          b.style.color = "#8e8e9e";
+          b.style.borderColor = "#26161b";
+          b.classList.remove("active");
+        });
+        btn.style.background = "#ff1e42";
+        btn.style.color = "#fff";
+        btn.style.borderColor = "#ff4d6a";
+        btn.classList.add("active");
+
+        currentLang = btn.dataset.lang;
+        updateUIText();
+      };
+    });
+
+    function updateUIText() {
+      const t = translations[currentLang];
+      document.getElementById("connStatus").textContent = t.live;
+      document.getElementById("tabTerminal").textContent = t.term;
+      document.getElementById("tabScanner").textContent = t.scan;
+      
+      const cats = document.querySelectorAll(".cat");
+      if(cats.length >= 5) {
+        cats[0].textContent = t.allCat;
+        cats[1].textContent = t.fxCat;
+        cats[2].textContent = t.cryptoCat;
+        cats[3].textContent = t.commCat;
+        cats[4].textContent = t.stockCat;
+      }
+      
+      document.getElementById("lblSelectAsset").textContent = t.selectAsset;
+      document.getElementById("lblExpTime").textContent = t.expLabel;
+      
+      document.querySelectorAll(".m-box")[0].querySelector(".m-name").textContent = t.rsi;
+      document.querySelectorAll(".m-box")[1].querySelector(".m-name").textContent = t.ema;
+      document.querySelectorAll(".m-box")[2].querySelector(".m-name").textContent = t.conf;
+      document.querySelectorAll(".m-box")[3].querySelector(".m-name").textContent = t.sup;
+      document.querySelectorAll(".m-box")[4].querySelector(".m-name").textContent = t.res;
+      document.querySelectorAll(".m-box")[5].querySelector(".m-name".textContent = t.vol;
+
+      if(document.getElementById("sigDirection").textContent.includes("ОЖИДАНИЕ") || 
+         document.getElementById("sigDirection").textContent.includes("WAITING") || 
+         document.getElementById("sigDirection").textContent.includes("ОЧІКУВАННЯ") ||
+         document.getElementById("sigDirection").textContent.includes("АНАЛИЗ")) {
+        document.getElementById("sigDirection").textContent = t.waitSig;
+        document.getElementById("sigReason").textContent = t.sigReason;
+        document.getElementById("sigMeta").textContent = t.sigMeta;
+      }
+      document.getElementById("btnSignal").textContent = t.btnSig;
+      document.getElementById("lblScannerTitle").textContent = t.scannerTitle;
+    }
+
+    // Автоматическая зачистка Netlify бейджа
+    setInterval(() => {
+      document.querySelectorAll('._netlify-badge, [id*="netlify"], a[href*="netlify.com"], div[style*="netlify"]').forEach(el => el.remove());
+    }, 500);
+  </script>
+</body>
+</html>
